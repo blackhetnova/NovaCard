@@ -2,7 +2,7 @@ import { DataForm } from '@/components/formflow/DataForm';
 
 export default function Home() {
   return (
-    <main className="flex min-h-full items-center justify-center p-4 sm:p-8 md:p-12" style={{ perspective: '1200px' }}>
+    <main className="flex min-h-full items-center justify-center p-4 sm:p-8 md:p-12">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8 flex flex-col items-center justify-center gap-4">
           <div className="flex items-center gap-3">

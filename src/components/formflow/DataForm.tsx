@@ -33,7 +33,9 @@ import { submitData } from "@/app/actions";
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters."),
   contactNumber: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Please enter a valid contact number."),
-  birthDate: z.date({ required_error: "A date of birth is required." }),
+  birthDate: z.string().refine((val) => /^\d{2}-\d{2}-\d{4}$/.test(val), {
+    message: "Please enter a valid date in DD-MM-YYYY format.",
+  }),
   profilePic: z
     .any()
     .refine((files) => files?.length === 1, "Profile picture is required.")
@@ -128,44 +130,15 @@ const FileUpload = ({ field, label, description, fileTypeDescription, form }: { 
 export function DataForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const cardRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       fullName: "",
       contactNumber: "",
+      birthDate: "",
     },
   });
-
-  useEffect(() => {
-    const card = cardRef.current;
-    if (!card) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const { clientX, clientY, currentTarget } = e;
-      const { left, top, width, height } = (currentTarget as HTMLElement).getBoundingClientRect();
-      const x = (clientX - left) / width;
-      const y = (clientY - top) / height;
-
-      const rotateX = (y - 0.5) * -30;
-      const rotateY = (x - 0.5) * 30;
-
-      card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
-    };
-
-    const handleMouseLeave = () => {
-      card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-    };
-
-    card.addEventListener('mousemove', handleMouseMove);
-    card.addEventListener('mouseleave', handleMouseLeave);
-
-    return () => {
-      card.removeEventListener('mousemove', handleMouseMove);
-      card.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, []);
 
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
@@ -173,7 +146,7 @@ export function DataForm() {
     const formData = new FormData();
     formData.append("fullName", values.fullName);
     formData.append("contactNumber", values.contactNumber);
-    formData.append("birthDate", format(values.birthDate, "dd-MM-yyyy"));
+    formData.append("birthDate", values.birthDate);
     formData.append("profilePic", values.profilePic[0]);
     formData.append("signature", values.signature[0]);
 
@@ -207,7 +180,7 @@ export function DataForm() {
   }
 
   return (
-    <Card ref={cardRef} className="w-full shadow-lg transition-transform duration-300 ease-out hover:shadow-2xl hover:shadow-primary/20 border border-primary/20" style={{ transformStyle: 'preserve-3d' }}>
+    <Card className="w-full shadow-lg border border-primary/20">
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -241,39 +214,11 @@ export function DataForm() {
               control={form.control}
               name="birthDate"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
+                <FormItem>
                   <FormLabel>Date of Birth</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal hover:border-primary",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            format(field.value, "dd-MM-yyyy")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <FormControl>
+                    <Input placeholder="DD-MM-YYYY" {...field} className="focus:border-primary" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
